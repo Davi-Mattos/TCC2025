@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Criar Atividade - Coordenador</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Criar Nova Atividade</h1>
+        <form id="formAtividade">
+            <label for="nomeAtividade">Nome da Atividade:</label>
+            <input type="text" id="nomeAtividade" name="nomeAtividade" required>
+
+            <label for="sequencia">Sequência:</label>
+            <input type="number" id="sequencia" name="sequencia" required>
+
+            <label for="dataEntrega">Data de Entrega:</label>
+            <input type="date" id="dataEntrega" name="dataEntrega" required>
+
+            <button type="submit">Criar Atividade</button>
+        </form>
+        <div id="mensagem"></div>
+    </div>
+
+    <script>
+        document.getElementById('formAtividade').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const dados = {
+                nomeAtividade: formData.get('nomeAtividade'),
+                sequencia: formData.get('sequencia'),
+                dataEntrega: formData.get('dataEntrega')
+            };
+
+            try {
+                const response = await fetch('/api/atividades', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(dados)
+                });
+
+                const resultado = await response.json();
+                
+                if (response.ok) {
+                    document.getElementById('mensagem').innerHTML = `
+                        <p style="color: green;">${resultado.message}</p>
+                    `;
+                    document.getElementById('formAtividade').reset();
+                } else {
+                    document.getElementById('mensagem').innerHTML = `
+                        <p style="color: red;">${resultado.message}</p>
+                    `;
+                }
+            } catch (erro) {
+                console.error('Erro:', erro);
+                document.getElementById('mensagem').innerHTML = `
+                    <p style="color: red;">Erro ao criar atividade</p>
+                `;
+            }
+        });
+    </script>
+</body>
+</html>

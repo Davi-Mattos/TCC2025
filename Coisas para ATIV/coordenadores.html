@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Painel dos Coordenadores — Grupos de TCC</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(135deg, #2c3e50, #3498db);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 40px 20px;
+      overflow-y: auto;
+    }
+
+    .container {
+      background-color: #ffffff;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+      width: 100%;
+      max-width: 1200px;
+      position: relative;
+    }
+
+    h1 {
+      color: #2c3e50;
+      text-align: center;
+      margin-bottom: 18px;
+    }
+
+    /* Grid para os cards dos grupos */
+    .grupos-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+      max-height: 72vh; /* espaço para rolagem dentro do container */
+      overflow-y: auto;
+      padding-right: 8px;
+    }
+
+    /* fallback responsivo */
+    @media (max-width: 1200px) {
+      .grupos-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+    @media (max-width: 900px) {
+      .grupos-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 480px) {
+      .grupos-grid { grid-template-columns: 1fr; }
+    }
+
+    /* Cada card do grupo */
+    .grupo-card {
+      background-color: #fff;
+      border-radius: 10px;
+      padding: 18px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.08);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 160px;
+      transition: transform .12s ease, box-shadow .12s ease;
+    }
+    .grupo-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 10px 20px rgba(0,0,0,0.12);
+    }
+
+    .grupo-card h2 {
+      color: #2c3e50;
+      font-size: 16px;
+      margin: 0 0 12px 0;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Integrantes */
+    .integrantes {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 12px;
+      justify-content: center;
+    }
+
+    .integrante {
+      background-color: #3498db;
+      color: #fff;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 600;
+      max-width: 100%;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Total de arquivos enviados */
+    .arquivos-info {
+      font-size: 13px;
+      text-align: center;
+      margin-bottom: 12px;
+      color: #2c3e50;
+      font-weight: 600;
+    }
+
+    /* Botão Abrir */
+    .btn-abrir {
+      display: block;
+      background-color: #2ecc71;
+      color: #fff;
+      text-decoration: none;
+      text-align: center;
+      padding: 10px 0;
+      border-radius: 20px;
+      font-weight: 700;
+      transition: background-color 0.18s ease, transform 0.08s;
+      border: none;
+      cursor: pointer;
+    }
+    .btn-abrir:hover { background-color: #27ae60; }
+    .btn-abrir:active { transform: translateY(1px); }
+
+    /* Botão sair */
+    .sair-btn {
+      position: absolute;
+      top: 15px;
+      left: 15px;
+      background-color: #db3434;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background-color 0.3s;
+      text-decoration: none;
+    }
+    .sair-btn:hover { background-color: #b92929; }
+
+    /* Loader / mensagem */
+    .mensagem {
+      text-align: center;
+      color: #2c3e50;
+      margin: 12px 0;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+    <a href="/login" class="sair-btn">Sair</a>
+  <div class="container">
+    
+
+    <h1>Grupos de TCC — Painel do Coordenador</h1>
+
+    <div id="mensagem" class="mensagem">Carregando grupos...</div>
+
+    <div id="gridGrupos" class="grupos-grid" aria-live="polite" aria-busy="true">
+      <!-- Cards serão injetados aqui via JS -->
+    </div>
+
+
+    <!-- Adicione este item no menu de navegação do coordenador -->
+    <li><a href="/criar-atividade">Criar Atividade</a></li>
+  </div>
+
+  <script>
+    async function carregarGruposResumo() {
+      const mensagemEl = document.getElementById('mensagem');
+      const grid = document.getElementById('gridGrupos');
+      mensagemEl.textContent = 'Carregando grupos...';
+      grid.innerHTML = '';
+      try {
+        const resp = await fetch('/api/grupos-resumo');
+        if (!resp.ok) {
+          throw new Error('Erro na requisição: ' + resp.status);
+        }
+        const grupos = await resp.json();
+
+        if (!grupos || grupos.length === 0) {
+          mensagemEl.textContent = 'Nenhum grupo cadastrado.';
+          return;
+        }
+
+        mensagemEl.textContent = '';
+        grupos.forEach(g => {
+          const card = document.createElement('article');
+          card.className = 'grupo-card';
+          card.setAttribute('role', 'group');
+          card.setAttribute('aria-label', g.tema || 'Grupo sem tema');
+
+          // Título / Tema
+          const titulo = document.createElement('h2');
+          titulo.textContent = g.tema || 'Tema não informado';
+          card.appendChild(titulo);
+
+          // Integrantes
+          const membrosWrap = document.createElement('div');
+          membrosWrap.className = 'integrantes';
+          if (Array.isArray(g.membros) && g.membros.length > 0) {
+            g.membros.forEach(name => {
+              const chip = document.createElement('div');
+              chip.className = 'integrante';
+              chip.textContent = name;
+              membrosWrap.appendChild(chip);
+            });
+          } else {
+            const chip = document.createElement('div');
+            chip.className = 'integrante';
+            chip.textContent = 'Sem integrantes';
+            membrosWrap.appendChild(chip);
+          }
+          card.appendChild(membrosWrap);
+
+          // Quantidade de arquivos
+          const qtd = document.createElement('div');
+          qtd.className = 'arquivos-info';
+          qtd.textContent = (g.qtdArquivos || 0) + ' arquivo(s) enviado(s)';
+          card.appendChild(qtd);
+
+          // Botão Abrir (sem ação por enquanto)
+          const btn = document.createElement('button');
+          btn.className = 'btn-abrir';
+          btn.type = 'button';
+          btn.textContent = 'Abrir';
+          btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            // placeholder: futura ação de abrir detalhes do grupo
+            console.log('Abrir grupo:', g.idGrupo);
+          });
+          card.appendChild(btn);
+
+          grid.appendChild(card);
+        });
+
+        // accessibility
+        grid.setAttribute('aria-busy', 'false');
+      } catch (err) {
+        console.error(err);
+        document.getElementById('mensagem').textContent = 'Erro ao carregar grupos.';
+      }
+    }
+
+    // carregar ao abrir a página
+    window.addEventListener('DOMContentLoaded', carregarGruposResumo);
+  </script>
+</body>
+</html>
