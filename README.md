@@ -1,7 +1,7 @@
 # TCC2025
 TCC feito como finalização do curso tecnico de informatica no ano de 2025
 
-# Dowload 
+# DOWNLOAD 
 
 Localizado no Releases com o nome de "TCC DOWLOAD"
 
